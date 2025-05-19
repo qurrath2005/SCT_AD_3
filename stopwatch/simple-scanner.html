@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple QR Code Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #reader {
+            width: 100%;
+            margin: 20px 0;
+        }
+        #scanResult {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .file-label:hover {
+            background-color: #2980b9;
+        }
+        .test-qr {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            text-align: center;
+        }
+        .test-qr img {
+            max-width: 150px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin: 10px 0;
+        }
+        .debug-info {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple QR Code Scanner</h1>
+        
+        <div>
+            <button id="startCamera">Start Camera</button>
+            <label for="fileInput" class="file-label">Upload Image</label>
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+        </div>
+        
+        <div id="reader"></div>
+        
+        <div id="scanResult">
+            <p>Scan result will appear here</p>
+        </div>
+        
+        <div class="test-qr">
+            <h3>Test QR Code</h3>
+            <p>If you're having trouble with your camera, try scanning this test QR code:</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://example.com" alt="Test QR Code">
+            <p>This QR code contains: https://example.com</p>
+        </div>
+        
+        <button id="checkCompatibility">Check System Compatibility</button>
+        <div id="debugInfo" class="debug-info"></div>
+    </div>
+    
+    <script>
+        // Get DOM elements
+        const startCameraBtn = document.getElementById('startCamera');
+        const fileInput = document.getElementById('fileInput');
+        const reader = document.getElementById('reader');
+        const scanResult = document.getElementById('scanResult');
+        const checkCompatibilityBtn = document.getElementById('checkCompatibility');
+        const debugInfo = document.getElementById('debugInfo');
+        
+        // Global variable for scanner
+        let html5QrCode;
+        
+        // Start camera scanner
+        startCameraBtn.addEventListener('click', function() {
+            // Clear previous scanner
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    startScanner();
+                }).catch(err => {
+                    console.error("Error stopping previous scan:", err);
+                    startScanner();
+                });
+            } else {
+                startScanner();
+            }
+        });
+        
+        // Function to start scanner
+        function startScanner() {
+            // Clear reader area
+            reader.innerHTML = '';
+            scanResult.innerHTML = '<p>Starting camera...</p>';
+            
+            try {
+                // Create scanner instance
+                html5QrCode = new Html5Qrcode("reader");
+                
+                const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                    // Stop scanner after successful scan
+                    html5QrCode.stop();
+                    
+                    // Display result
+                    displayResult(decodedText);
+                };
+                
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                };
+                
+                // Start scanner
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    qrCodeSuccessCallback
+                ).catch(error => {
+                    console.error("Error starting scanner:", error);
+                    scanResult.innerHTML = `
+                        <p style="color: red;">Error accessing camera: ${error.message}</p>
+                        <p>Make sure you've granted camera permissions and are using a secure context (HTTPS or localhost).</p>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error initializing scanner:", error);
+                scanResult.innerHTML = `<p style="color: red;">Error initializing scanner: ${error.message}</p>`;
+            }
+        }
+        
+        // Scan from file
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                // Clear reader area
+                reader.innerHTML = '';
+                scanResult.innerHTML = '<p>Processing image...</p>';
+                
+                try {
+                    // Create scanner instance
+                    html5QrCode = new Html5Qrcode("reader");
+                    
+                    // Scan file
+                    html5QrCode.scanFile(file, true)
+                        .then(decodedText => {
+                            displayResult(decodedText);
+                        })
+                        .catch(error => {
+                            console.error("Error scanning file:", error);
+                            scanResult.innerHTML = `<p style="color: red;">Error scanning file: No QR code found or invalid image</p>`;
+                            
+                            // Show the uploaded image
+                            const imageUrl = URL.createObjectURL(file);
+                            scanResult.innerHTML += `
+                                <div style="margin-top: 10px;">
+                                    <img src="${imageUrl}" alt="Uploaded Image" style="max-width: 100%; max-height: 300px;">
+                                </div>
+                            `;
+                        });
+                } catch (error) {
+                    console.error("Error initializing file scanner:", error);
+                    scanResult.innerHTML = `<p style="color: red;">Error initializing scanner: ${error.message}</p>`;
+                }
+            }
+        });
+        
+        // Display scan result
+        function displayResult(result) {
+            scanResult.innerHTML = `
+                <p><strong>Scanned QR Code:</strong></p>
+                <p>${result}</p>
+                <button id="copyResult">Copy</button>
+            `;
+            
+            // Add copy functionality
+            document.getElementById('copyResult').addEventListener('click', function() {
+                navigator.clipboard.writeText(result)
+                    .then(() => alert('Copied to clipboard!'))
+                    .catch(err => console.error('Error copying text: ', err));
+            });
+            
+            // If result is a URL, add open link button
+            if (isValidURL(result)) {
+                const openLinkBtn = document.createElement('button');
+                openLinkBtn.textContent = 'Open Link';
+                openLinkBtn.style.marginLeft = '10px';
+                openLinkBtn.addEventListener('click', function() {
+                    window.open(result, '_blank');
+                });
+                
+                document.getElementById('copyResult').after(openLinkBtn);
+            }
+        }
+        
+        // Check if string is a valid URL
+        function isValidURL(str) {
+            try {
+                new URL(str);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        
+        // Check system compatibility
+        checkCompatibilityBtn.addEventListener('click', function() {
+            debugInfo.innerHTML = '<p>Checking system compatibility...</p>';
+            
+            setTimeout(() => {
+                let debugText = '';
+                
+                // Check browser
+                debugText += `<p><strong>Browser:</strong> ${navigator.userAgent}</p>`;
+                
+                // Check if running in secure context
+                debugText += `<p><strong>Secure Context:</strong> ${window.isSecureContext ? 'Yes' : 'No'}</p>`;
+                
+                // Check if library is loaded
+                debugText += `<p><strong>Html5QrCode Library:</strong> ${typeof Html5Qrcode !== 'undefined' ? 'Loaded' : 'Not Loaded'}</p>`;
+                
+                // Check camera access
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    debugText += `<p><strong>Camera API:</strong> Available</p>`;
+                    
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(stream => {
+                            debugText += `<p><strong>Camera Access:</strong> <span style="color: green;">Granted</span></p>`;
+                            debugInfo.innerHTML = debugText;
+                            
+                            // Stop the stream
+                            stream.getTracks().forEach(track => track.stop());
+                        })
+                        .catch(error => {
+                            debugText += `<p><strong>Camera Access:</strong> <span style="color: red;">Denied - ${error.message}</span></p>`;
+                            debugInfo.innerHTML = debugText;
+                        });
+                } else {
+                    debugText += `<p><strong>Camera API:</strong> <span style="color: red;">Not Available</span></p>`;
+                }
+                
+                // Check if running from localhost or HTTPS
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const isHttps = window.location.protocol === 'https:';
+                debugText += `<p><strong>Protocol:</strong> ${window.location.protocol}</p>`;
+                debugText += `<p><strong>Localhost:</strong> ${isLocalhost ? 'Yes' : 'No'}</p>`;
+                debugText += `<p><strong>Secure Connection (HTTPS or localhost):</strong> ${isHttps || isLocalhost ? 'Yes' : 'No'}</p>`;
+                
+                debugInfo.innerHTML = debugText;
+            }, 500);
+        });
+    </script>
+</body>
+</html>

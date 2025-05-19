@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Library Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 10px;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Library Test</h1>
+    
+    <div class="test-section">
+        <h2>Library Status</h2>
+        <div id="libraryStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>QR Code Generator Test</h2>
+        <input type="text" id="qrText" value="https://example.com" placeholder="Enter text for QR code">
+        <button id="generateBtn">Generate QR Code</button>
+        <div id="qrcode"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>QR Code Scanner Test</h2>
+        <button id="startScanBtn">Start Camera Scan</button>
+        <div id="reader"></div>
+        <div id="scanResult"></div>
+    </div>
+    
+    <script>
+        // Check if libraries are loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusDiv = document.getElementById('libraryStatus');
+            
+            if (typeof Html5Qrcode !== 'undefined') {
+                statusDiv.innerHTML += '<p style="color: green;">✓ Html5Qrcode library loaded successfully</p>';
+            } else {
+                statusDiv.innerHTML += '<p style="color: red;">✗ Html5Qrcode library failed to load</p>';
+            }
+            
+            if (typeof QRCode !== 'undefined') {
+                statusDiv.innerHTML += '<p style="color: green;">✓ QRCode library loaded successfully</p>';
+            } else {
+                statusDiv.innerHTML += '<p style="color: red;">✗ QRCode library failed to load</p>';
+            }
+        });
+        
+        // QR Code Generator Test
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const text = document.getElementById('qrText').value;
+            const qrcodeDiv = document.getElementById('qrcode');
+            
+            // Clear previous QR code
+            qrcodeDiv.innerHTML = '';
+            
+            try {
+                new QRCode(qrcodeDiv, {
+                    text: text,
+                    width: 128,
+                    height: 128
+                });
+                console.log('QR code generated successfully');
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+                qrcodeDiv.innerHTML = '<p style="color: red;">Error generating QR code: ' + error.message + '</p>';
+            }
+        });
+        
+        // QR Code Scanner Test
+        document.getElementById('startScanBtn').addEventListener('click', function() {
+            const scanResultDiv = document.getElementById('scanResult');
+            scanResultDiv.innerHTML = '<p>Starting camera...</p>';
+            
+            try {
+                const html5QrCode = new Html5Qrcode("reader");
+                const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                    html5QrCode.stop();
+                    scanResultDiv.innerHTML = '<p><strong>Scanned QR Code:</strong> ' + decodedText + '</p>';
+                    console.log('QR code scanned successfully:', decodedText);
+                };
+                
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    qrCodeSuccessCallback
+                ).catch(error => {
+                    console.error("Error starting scanner:", error);
+                    scanResultDiv.innerHTML = '<p style="color: red;">Error accessing camera: ' + error.message + '</p>';
+                });
+            } catch (error) {
+                console.error('Error initializing scanner:', error);
+                scanResultDiv.innerHTML = '<p style="color: red;">Error initializing scanner: ' + error.message + '</p>';
+            }
+        });
+    </script>
+</body>
+</html>

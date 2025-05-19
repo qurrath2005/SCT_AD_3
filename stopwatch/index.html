@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Tools</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tool-card h2 {
+            color: #3498db;
+            margin-top: 0;
+        }
+
+        .tool-card p {
+            margin-bottom: 20px;
+        }
+
+        .tool-card a {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .tool-card a:hover {
+            background-color: #2980b9;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Tools</h1>
+
+    <div class="tools-container">
+        <div class="tool-card">
+            <h2>QR Code Scanner</h2>
+            <p>Scan QR codes using your device's camera or upload images containing QR codes.</p>
+            <p>Features:</p>
+            <ul>
+                <li>Camera scanning</li>
+                <li>Image upload scanning</li>
+                <li>Copy and open scanned content</li>
+            </ul>
+            <a href="reliable-scanner.html">Open Scanner</a>
+        </div>
+
+        <div class="tool-card">
+            <h2>QR Code Generator</h2>
+            <p>Generate QR codes for various types of content with customization options.</p>
+            <p>Features:</p>
+            <ul>
+                <li>Generate QR codes for text, URLs, contacts, and WiFi</li>
+                <li>Customize QR code colors</li>
+                <li>Download generated QR codes</li>
+            </ul>
+            <a href="simple-qr.html">Open Generator</a>
+        </div>
+
+        <div class="tool-card">
+            <h2>All-in-One QR App</h2>
+            <p>Our complete QR code application with scanning, generation, and history tracking.</p>
+            <p>Features:</p>
+            <ul>
+                <li>All scanner and generator features</li>
+                <li>History tracking of scanned and generated QR codes</li>
+                <li>Advanced customization options</li>
+            </ul>
+            <a href="full-app.html">Open Full App</a>
+        </div>
+
+        <div class="tool-card">
+            <h2>QR Code Test Page</h2>
+            <p>Test page to check if QR code libraries are working correctly on your device.</p>
+            <p>Features:</p>
+            <ul>
+                <li>Library compatibility check</li>
+                <li>Simple scanner and generator test</li>
+                <li>System compatibility information</li>
+            </ul>
+            <a href="test.html">Open Test Page</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>QR Code Tools &copy; 2025 | All tools work directly in your browser - no data is sent to any server</p>
+    </div>
+</body>
+</html>

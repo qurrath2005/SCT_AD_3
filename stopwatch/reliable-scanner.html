@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reliable QR Code Scanner</title>
+    <!-- Use jsQR library instead -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .file-label:hover {
+            background-color: #2980b9;
+        }
+        #canvas {
+            display: none;
+        }
+        #video {
+            width: 100%;
+            max-width: 500px;
+            background-color: #000;
+            margin: 20px auto;
+            display: block;
+        }
+        #scanResult {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .test-qr {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            text-align: center;
+        }
+        .test-qr img {
+            max-width: 150px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin: 10px 0;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reliable QR Code Scanner</h1>
+        
+        <div style="text-align: center;">
+            <button id="startCamera">Start Camera</button>
+            <button id="stopCamera" disabled>Stop Camera</button>
+            <label for="fileInput" class="file-label">Upload Image</label>
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+        </div>
+        
+        <video id="video" muted playsinline></video>
+        <canvas id="canvas"></canvas>
+        
+        <div id="scanResult">
+            <p>Scan result will appear here</p>
+        </div>
+        
+        <div class="test-qr">
+            <h3>Test QR Code</h3>
+            <p>If you're having trouble with your camera, try scanning this test QR code:</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://example.com" alt="Test QR Code">
+            <p>This QR code contains: https://example.com</p>
+        </div>
+        
+        <a href="index.html" class="back-link">← Back to QR Code Tools</a>
+    </div>
+    
+    <script>
+        // Get DOM elements
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const fileInput = document.getElementById('fileInput');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const scanResult = document.getElementById('scanResult');
+        
+        // Global variables
+        let stream = null;
+        let scanning = false;
+        
+        // Start camera scanner
+        startCameraBtn.addEventListener('click', function() {
+            if (scanning) return;
+            
+            startCameraBtn.disabled = true;
+            scanResult.innerHTML = '<p>Starting camera...</p>';
+            
+            // Check if camera is available
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true); // required for iPhone
+                    video.play();
+                    stopCameraBtn.disabled = false;
+                    scanning = true;
+                    scanResult.innerHTML = '<p>Camera started. Point it at a QR code.</p>';
+                    
+                    // Start scanning for QR codes
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(error) {
+                    console.error("Error accessing camera:", error);
+                    startCameraBtn.disabled = false;
+                    scanResult.innerHTML = `
+                        <p style="color: red;">Error accessing camera: ${error.message}</p>
+                        <p>Make sure you've granted camera permissions and are using a secure context (HTTPS or localhost).</p>
+                        <p>Try using the "Upload Image" option instead.</p>
+                    `;
+                });
+            } else {
+                startCameraBtn.disabled = false;
+                scanResult.innerHTML = `
+                    <p style="color: red;">Camera not available on this device or browser.</p>
+                    <p>Try using the "Upload Image" option instead.</p>
+                `;
+            }
+        });
+        
+        // Stop camera
+        stopCameraBtn.addEventListener('click', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                scanning = false;
+                startCameraBtn.disabled = false;
+                stopCameraBtn.disabled = true;
+                scanResult.innerHTML = '<p>Camera stopped.</p>';
+            }
+        });
+        
+        // Process video frames
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+                // Set canvas dimensions to match video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Draw video frame to canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Get image data for QR code detection
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Process image data with jsQR
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+                
+                // If QR code found
+                if (code) {
+                    console.log("QR Code detected:", code.data);
+                    
+                    // Stop scanning
+                    scanning = false;
+                    
+                    // Display result
+                    displayResult(code.data);
+                }
+                
+                // Continue scanning
+                if (scanning) {
+                    requestAnimationFrame(tick);
+                }
+            } else if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+        
+        // Scan from file
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                scanResult.innerHTML = '<p>Processing image...</p>';
+                
+                // Create image element
+                const img = new Image();
+                img.onload = function() {
+                    // Set canvas dimensions to match image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw image to canvas
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get image data for QR code detection
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Process image data with jsQR
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    // If QR code found
+                    if (code) {
+                        console.log("QR Code detected in image:", code.data);
+                        displayResult(code.data);
+                    } else {
+                        scanResult.innerHTML = `
+                            <p style="color: red;">No QR code found in the image.</p>
+                            <div style="margin-top: 10px;">
+                                <img src="${URL.createObjectURL(file)}" alt="Uploaded Image" style="max-width: 100%; max-height: 300px;">
+                            </div>
+                        `;
+                    }
+                };
+                
+                img.onerror = function() {
+                    scanResult.innerHTML = '<p style="color: red;">Error loading image. Please try another file.</p>';
+                };
+                
+                img.src = URL.createObjectURL(file);
+            }
+        });
+        
+        // Display scan result
+        function displayResult(result) {
+            scanResult.innerHTML = `
+                <p><strong>Scanned QR Code:</strong></p>
+                <p>${result}</p>
+                <button id="copyResult">Copy</button>
+            `;
+            
+            // Add copy functionality
+            document.getElementById('copyResult').addEventListener('click', function() {
+                navigator.clipboard.writeText(result)
+                    .then(() => alert('Copied to clipboard!'))
+                    .catch(err => console.error('Error copying text: ', err));
+            });
+            
+            // If result is a URL, add open link button
+            if (isValidURL(result)) {
+                const openLinkBtn = document.createElement('button');
+                openLinkBtn.textContent = 'Open Link';
+                openLinkBtn.style.marginLeft = '10px';
+                openLinkBtn.addEventListener('click', function() {
+                    window.open(result, '_blank');
+                });
+                
+                document.getElementById('copyResult').after(openLinkBtn);
+            }
+            
+            // Re-enable start camera button
+            startCameraBtn.disabled = false;
+        }
+        
+        // Check if string is a valid URL
+        function isValidURL(str) {
+            try {
+                new URL(str);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>

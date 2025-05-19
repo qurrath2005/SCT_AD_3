@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner & Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Include QR code libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <!-- Add console logging for debugging -->
+    <script>
+        console.log("Document loading...");
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM fully loaded");
+        });
+        window.addEventListener('load', () => {
+            console.log("All resources loaded");
+        });
+        // Check if libraries are loaded
+        window.addEventListener('load', () => {
+            const libraryError = document.getElementById('libraryError');
+            
+            if (typeof Html5Qrcode === 'undefined' || typeof QRCode === 'undefined') {
+                console.error("Required libraries not loaded!");
+                if (libraryError) {
+                    libraryError.style.display = 'block';
+                }
+                
+                // Disable all buttons
+                document.querySelectorAll('button').forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // Re-enable only the refresh button
+                const refreshBtn = libraryError.querySelector('button');
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                }
+            } else {
+                console.log("All libraries loaded successfully");
+                if (libraryError) {
+                    libraryError.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QR Code Scanner & Generator</h1>
+            <div id="libraryError" style="display: none; color: red; background-color: #ffeeee; padding: 10px; border: 1px solid red; margin-bottom: 15px; border-radius: 5px;">
+                <p><strong>Error:</strong> Required libraries failed to load. Please check your internet connection and try refreshing the page.</p>
+                <button onclick="location.reload()" style="padding: 5px 10px; margin-top: 5px; cursor: pointer;">Refresh Page</button>
+            </div>
+            <nav>
+                <button id="scanTab" class="tab-button active">Scan QR</button>
+                <button id="generateTab" class="tab-button">Generate QR</button>
+                <button id="historyTab" class="tab-button">History</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Scanner Section -->
+            <section id="scannerSection" class="section active">
+                <h2>Scan QR Code</h2>
+                <div class="scanner-options">
+                    <button id="startCamera" class="primary-button">Start Camera</button>
+                    <label for="galleryInput" class="primary-button">Upload Image</label>
+                    <input type="file" id="galleryInput" accept="image/*" hidden>
+                </div>
+                <div id="reader"></div>
+                <div id="scanResult" class="result-container"></div>
+
+                <!-- Test QR Code -->
+                <div class="test-qr-section">
+                    <h3>Test QR Code</h3>
+                    <p>If you're having trouble with your camera, try scanning this test QR code:</p>
+                    <div class="test-qr-container">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://example.com" alt="Test QR Code" width="150" height="150">
+                        <p>This QR code contains: https://example.com</p>
+                    </div>
+                </div>
+                
+                <!-- Debug Section (hidden by default) -->
+                <div class="debug-section" style="margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px;">
+                    <h3>Debug Information</h3>
+                    <p>If you're experiencing issues, click the button below to check your system compatibility:</p>
+                    <button id="checkCompatibility" class="secondary-button">Check Compatibility</button>
+                    <div id="debugInfo" style="margin-top: 10px; font-family: monospace; font-size: 12px;"></div>
+                </div>
+            </section>
+
+            <!-- Generator Section -->
+            <section id="generatorSection" class="section">
+                <h2>Generate QR Code</h2>
+                <div class="generator-options">
+                    <div class="qr-type-selector">
+                        <button class="qr-type-button active" data-type="url">URL</button>
+                        <button class="qr-type-button" data-type="text">Text</button>
+                        <button class="qr-type-button" data-type="contact">Contact</button>
+                        <button class="qr-type-button" data-type="wifi">WiFi</button>
+                    </div>
+
+                    <!-- URL Form -->
+                    <div id="urlForm" class="qr-form active">
+                        <input type="url" id="urlInput" placeholder="Enter URL" class="form-input">
+                    </div>
+
+                    <!-- Text Form -->
+                    <div id="textForm" class="qr-form">
+                        <textarea id="textInput" placeholder="Enter text" class="form-input"></textarea>
+                    </div>
+
+                    <!-- Contact Form -->
+                    <div id="contactForm" class="qr-form">
+                        <input type="text" id="nameInput" placeholder="Name" class="form-input">
+                        <input type="tel" id="phoneInput" placeholder="Phone" class="form-input">
+                        <input type="email" id="emailInput" placeholder="Email" class="form-input">
+                    </div>
+
+                    <!-- WiFi Form -->
+                    <div id="wifiForm" class="qr-form">
+                        <input type="text" id="ssidInput" placeholder="Network Name (SSID)" class="form-input">
+                        <input type="password" id="passwordInput" placeholder="Password" class="form-input">
+                        <select id="encryptionType" class="form-input">
+                            <option value="WPA">WPA/WPA2</option>
+                            <option value="WEP">WEP</option>
+                            <option value="nopass">No Password</option>
+                        </select>
+                    </div>
+
+                    <!-- Color Customization -->
+                    <div class="color-customization">
+                        <label for="qrColor">QR Code Color:</label>
+                        <input type="color" id="qrColor" value="#000000">
+                        <label for="bgColor">Background Color:</label>
+                        <input type="color" id="bgColor" value="#ffffff">
+                    </div>
+
+                    <button id="generateQR" class="primary-button">Generate QR Code</button>
+                </div>
+                <div id="qrCodeContainer" class="qr-result">
+                    <div id="qrcode"></div>
+                    <div class="qr-actions">
+                        <button id="downloadQR" class="secondary-button" disabled>Download</button>
+                        <button id="shareQR" class="secondary-button" disabled>Share</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="historySection" class="section">
+                <h2>QR Code History</h2>
+                <div class="history-filters">
+                    <button class="history-filter active" data-filter="all">All</button>
+                    <button class="history-filter" data-filter="scanned">Scanned</button>
+                    <button class="history-filter" data-filter="generated">Generated</button>
+                </div>
+                <div id="historyList" class="history-list"></div>
+                <button id="clearHistory" class="danger-button">Clear History</button>
+            </section>
+        </main>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="index.html" style="color: #3498db; text-decoration: none;">← Back to QR Code Tools</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="fallback.js"></script>
+</body>
+</html>

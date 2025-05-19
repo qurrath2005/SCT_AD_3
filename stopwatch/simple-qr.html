@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple QR Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .qr-result {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .qr-result img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: white;
+        }
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .color-picker input {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple QR Code Generator</h1>
+        
+        <div class="form-group">
+            <label for="qrType">QR Code Type:</label>
+            <select id="qrType">
+                <option value="text">Text</option>
+                <option value="url">URL</option>
+                <option value="contact">Contact Information</option>
+                <option value="wifi">WiFi Network</option>
+            </select>
+        </div>
+        
+        <!-- Text Input -->
+        <div id="textInput" class="form-group">
+            <label for="text">Enter Text:</label>
+            <textarea id="text" placeholder="Enter any text you want to encode"></textarea>
+        </div>
+        
+        <!-- URL Input -->
+        <div id="urlInput" class="form-group" style="display: none;">
+            <label for="url">Enter URL:</label>
+            <input type="url" id="url" placeholder="https://example.com">
+        </div>
+        
+        <!-- Contact Input -->
+        <div id="contactInput" class="form-group" style="display: none;">
+            <label for="name">Name:</label>
+            <input type="text" id="name" placeholder="John Doe">
+            
+            <label for="phone">Phone:</label>
+            <input type="tel" id="phone" placeholder="+1234567890">
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="john@example.com">
+        </div>
+        
+        <!-- WiFi Input -->
+        <div id="wifiInput" class="form-group" style="display: none;">
+            <label for="ssid">Network Name (SSID):</label>
+            <input type="text" id="ssid" placeholder="WiFi Network Name">
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="WiFi Password">
+            
+            <label for="encryption">Encryption Type:</label>
+            <select id="encryption">
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">No Password</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>QR Code Colors:</label>
+            <div class="color-picker">
+                <span>Foreground:</span>
+                <input type="color" id="fgColor" value="#000000">
+                <span>Background:</span>
+                <input type="color" id="bgColor" value="#ffffff">
+            </div>
+        </div>
+        
+        <button id="generateBtn">Generate QR Code</button>
+        
+        <div class="qr-result" id="qrResult"></div>
+    </div>
+    
+    <script>
+        // Get DOM elements
+        const qrTypeSelect = document.getElementById('qrType');
+        const textInput = document.getElementById('textInput');
+        const urlInput = document.getElementById('urlInput');
+        const contactInput = document.getElementById('contactInput');
+        const wifiInput = document.getElementById('wifiInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const qrResult = document.getElementById('qrResult');
+        const fgColor = document.getElementById('fgColor');
+        const bgColor = document.getElementById('bgColor');
+        
+        // Show/hide input fields based on selected type
+        qrTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Hide all input fields
+            textInput.style.display = 'none';
+            urlInput.style.display = 'none';
+            contactInput.style.display = 'none';
+            wifiInput.style.display = 'none';
+            
+            // Show selected input field
+            switch (selectedType) {
+                case 'text':
+                    textInput.style.display = 'block';
+                    break;
+                case 'url':
+                    urlInput.style.display = 'block';
+                    break;
+                case 'contact':
+                    contactInput.style.display = 'block';
+                    break;
+                case 'wifi':
+                    wifiInput.style.display = 'block';
+                    break;
+            }
+        });
+        
+        // Generate QR code
+        generateBtn.addEventListener('click', function() {
+            const selectedType = qrTypeSelect.value;
+            let data = '';
+            
+            // Get data based on selected type
+            switch (selectedType) {
+                case 'text':
+                    data = document.getElementById('text').value.trim();
+                    if (!data) {
+                        alert('Please enter some text');
+                        return;
+                    }
+                    break;
+                    
+                case 'url':
+                    data = document.getElementById('url').value.trim();
+                    if (!data) {
+                        alert('Please enter a URL');
+                        return;
+                    }
+                    if (!data.startsWith('http')) {
+                        data = 'https://' + data;
+                    }
+                    break;
+                    
+                case 'contact':
+                    const name = document.getElementById('name').value.trim();
+                    const phone = document.getElementById('phone').value.trim();
+                    const email = document.getElementById('email').value.trim();
+                    
+                    if (!name && !phone && !email) {
+                        alert('Please enter at least one contact detail');
+                        return;
+                    }
+                    
+                    data = `Name: ${name || 'N/A'}\nPhone: ${phone || 'N/A'}\nEmail: ${email || 'N/A'}`;
+                    break;
+                    
+                case 'wifi':
+                    const ssid = document.getElementById('ssid').value.trim();
+                    const password = document.getElementById('password').value;
+                    const encryption = document.getElementById('encryption').value;
+                    
+                    if (!ssid) {
+                        alert('Please enter the network name (SSID)');
+                        return;
+                    }
+                    
+                    data = `WiFi Network: ${ssid}\nPassword: ${password || 'None'}\nEncryption: ${encryption}`;
+                    break;
+            }
+            
+            // Generate QR code using external API
+            const encodedData = encodeURIComponent(data);
+            const darkColor = fgColor.value.substring(1);
+            const lightColor = bgColor.value.substring(1);
+            
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedData}&color=${darkColor}&bgcolor=${lightColor}`;
+            
+            // Show loading message
+            qrResult.innerHTML = '<p>Generating QR code...</p>';
+            
+            // Create image element
+            const img = document.createElement('img');
+            img.src = qrApiUrl;
+            img.alt = 'Generated QR Code';
+            
+            // When image loads, replace loading message
+            img.onload = function() {
+                qrResult.innerHTML = '';
+                qrResult.appendChild(img);
+                
+                // Add download button
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download QR Code';
+                downloadBtn.style.marginTop = '10px';
+                downloadBtn.onclick = function() {
+                    window.open(qrApiUrl, '_blank');
+                };
+                
+                qrResult.appendChild(downloadBtn);
+            };
+            
+            img.onerror = function() {
+                qrResult.innerHTML = '<p style="color: red;">Error generating QR code. Please try again.</p>';
+            };
+        });
+    </script>
+</body>
+</html>
